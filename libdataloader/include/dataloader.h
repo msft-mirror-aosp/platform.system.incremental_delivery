@@ -80,21 +80,14 @@ struct DataLoaderParams {
     const std::string& className() const { return mClassName; }
     const std::string& arguments() const { return mArguments; }
 
-    struct NamedFd {
-        std::string name;
-        int fd;
-    };
-    const std::vector<NamedFd>& dynamicArgs() const { return mDynamicArgs; }
-
     DataLoaderParams(DataLoaderType type, std::string&& packageName, std::string&& className,
-                     std::string&& arguments, std::vector<NamedFd>&& dynamicArgs);
+                     std::string&& arguments);
 
 private:
     DataLoaderType const mType;
     std::string const mPackageName;
     std::string const mClassName;
     std::string const mArguments;
-    std::vector<NamedFd> const mDynamicArgs;
 };
 
 struct DataLoaderInstallationFile {
@@ -114,8 +107,7 @@ private:
 };
 
 struct FilesystemConnector : public DataLoaderFilesystemConnector {
-    // Returns a file descriptor that needs to be closed.
-    int openWrite(FileId fid);
+    android::incfs::UniqueFd openForSpecialOps(FileId fid);
     int writeBlocks(DataBlocks blocks);
     RawMetadata getRawMetadata(FileId fid);
 };
