@@ -58,13 +58,8 @@ inline DataLoaderParams createParams(const ::DataLoaderParams* params) {
     std::string packageName(params->packageName);
     std::string className(params->className);
     std::string arguments(params->arguments);
-    std::vector<DataLoaderParams::NamedFd> dynamicArgs(params->dynamicArgsSize);
-    for (size_t i = 0; i < dynamicArgs.size(); ++i) {
-        dynamicArgs[i].name = params->dynamicArgs[i].name;
-        dynamicArgs[i].fd = params->dynamicArgs[i].fd;
-    }
     return DataLoaderParams(type, std::move(packageName), std::move(className),
-                            std::move(arguments), std::move(dynamicArgs));
+                            std::move(arguments));
 }
 
 inline DataLoaderInstallationFile createInstallationFile(const ::DataLoaderInstallationFile* file) {
@@ -108,21 +103,19 @@ inline void DataLoader::initialize(DataLoader::Factory&& factory) {
 }
 
 inline DataLoaderParams::DataLoaderParams(DataLoaderType type, std::string&& packageName,
-                                          std::string&& className, std::string&& arguments,
-                                          std::vector<NamedFd>&& dynamicArgs)
+                                          std::string&& className, std::string&& arguments)
       : mType(type),
         mPackageName(std::move(packageName)),
         mClassName(std::move(className)),
-        mArguments(std::move(arguments)),
-        mDynamicArgs(std::move(dynamicArgs)) {}
+        mArguments(std::move(arguments)) {}
 
 inline DataLoaderInstallationFile::DataLoaderInstallationFile(DataLoaderLocation location,
                                                               std::string&& name, IncFsSize size,
                                                               RawMetadata&& metadata)
       : mLocation(location), mName(std::move(name)), mSize(size), mMetadata(std::move(metadata)) {}
 
-inline int FilesystemConnector::openWrite(FileId fid) {
-    return DataLoader_FilesystemConnector_openWrite(this, fid);
+inline android::incfs::UniqueFd FilesystemConnector::openForSpecialOps(FileId fid) {
+    return android::incfs::UniqueFd(DataLoader_FilesystemConnector_openForSpecialOps(this, fid));
 }
 
 inline int FilesystemConnector::writeBlocks(DataBlocks blocks) {
