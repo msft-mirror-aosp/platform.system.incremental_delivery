@@ -149,7 +149,7 @@ std::string fromFd(int fd) {
     }
 }
 
-static void preparePathComponent(std::string_view path, bool trimFront) {
+static void preparePathComponent(std::string_view& path, bool trimFront) {
     if (trimFront) {
         while (!path.empty() && path.front() == '/') {
             path.remove_prefix(1);
@@ -252,6 +252,13 @@ bool startsWith(std::string_view path, std::string_view prefix) {
         return false;
     }
     return path.size() == prefix.size() || path[prefix.size()] == '/';
+}
+
+bool endsWith(std::string_view path, std::string_view suffix) {
+    if (!path.ends_with(suffix)) {
+        return false;
+    }
+    return path.size() == suffix.size() || path[path.size() - suffix.size() - 1] == '/';
 }
 
 } // namespace android::incfs::path

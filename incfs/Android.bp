@@ -18,10 +18,28 @@ cc_defaults {
         "libselinux",
     ],
     target: {
+        android: {
+            static_libs: [
+                "com.android.sysprop.incremental",
+            ],
+        },
         linux_bionic: {
             enabled: true,
         }
-    }
+    },
+    tidy: true,
+    tidy_checks: [
+        "android-*",
+        "cert-*",
+        "clang-analyzer-security*",
+        "-cert-err34-c",
+        "clang-analyzer-security*",
+        // Disabling due to many unavoidable warnings from POSIX API usage.
+        "-google-runtime-int",
+        "-google-explicit-constructor",
+        // operator=() does not handle self-assignment properly - all protobuf-generated classes
+        "-cert-oop54-cpp",
+    ],
 }
 
 cc_library {
@@ -49,7 +67,6 @@ cc_library_headers {
 cc_test {
     name: "libincfs-test",
     defaults: ["libincfs_defaults"],
-    cflags: ["-Werror", "-Wall", "-Wextra"],
     static_libs: [
         "libincfs",
     ],
@@ -61,4 +78,17 @@ cc_test {
         "tests/MountRegistry_test.cpp",
     ],
     require_root: true,
+}
+
+cc_binary {
+    name: "incfsdump",
+    defaults: ["libincfs_defaults"],
+    host_supported: true,
+    static_libs: [
+        "libbase",
+    ],
+    srcs: [
+        "incfsdump/main.cpp",
+        "incfsdump/dump.cpp",
+    ],
 }
