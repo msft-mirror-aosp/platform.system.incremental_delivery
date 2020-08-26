@@ -26,7 +26,7 @@ __BEGIN_DECLS
 
 // Keep in sync with IDataLoaderStatusListener.aidl
 typedef enum {
-    DATA_LOADER_UNRECOVERABLE = 6,
+    DATA_LOADER_UNRECOVERABLE = 8,
 
     DATA_LOADER_FIRST_STATUS = DATA_LOADER_UNRECOVERABLE,
     DATA_LOADER_LAST_STATUS = DATA_LOADER_UNRECOVERABLE,
@@ -57,6 +57,10 @@ typedef struct {
     IncFsSize size;
     IncFsSpan metadata;
 } DataLoaderInstallationFile;
+
+typedef struct {
+    bool readLogsEnabled;
+} DataLoaderFilesystemParams;
 
 #ifdef __cplusplus
 
@@ -111,6 +115,9 @@ int DataLoader_FilesystemConnector_writeBlocks(DataLoaderFilesystemConnectorPtr,
 // INCFS_MAX_FILE_ATTR_SIZE
 int DataLoader_FilesystemConnector_getRawMetadata(DataLoaderFilesystemConnectorPtr, IncFsFileId fid,
                                                   char buffer[], size_t* bufferSize);
+
+bool DataLoader_FilesystemConnector_setParams(DataLoaderFilesystemConnectorPtr,
+                                              DataLoaderFilesystemParams params);
 
 int DataLoader_StatusListener_reportStatus(DataLoaderStatusListenerPtr listener,
                                            DataLoaderStatus status);

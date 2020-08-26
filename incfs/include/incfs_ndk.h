@@ -61,12 +61,13 @@ typedef enum {
     CMD,
     PENDING_READS,
     LOGS,
+    FDS_COUNT,
 } IncFsFdType;
 
 typedef enum {
     INCFS_DEFAULT_READ_TIMEOUT_MS = 10000,
     INCFS_DEFAULT_PENDING_READ_BUFFER_SIZE = 24,
-    INCFS_DEFAULT_PAGE_READ_BUFFER_PAGES = 2
+    INCFS_DEFAULT_PAGE_READ_BUFFER_PAGES = 4,
 } IncFsDefaults;
 
 typedef enum {
@@ -156,6 +157,7 @@ IncFsControl* IncFs_Open(const char* dir);
 IncFsControl* IncFs_CreateControl(IncFsFd cmd, IncFsFd pendingReads, IncFsFd logs);
 void IncFs_DeleteControl(IncFsControl* control);
 IncFsFd IncFs_GetControlFd(const IncFsControl* control, IncFsFdType type);
+IncFsSize IncFs_ReleaseControlFds(IncFsControl* control, IncFsFd out[], IncFsSize outSize);
 
 IncFsErrorCode IncFs_SetOptions(const IncFsControl* control, IncFsMountOptions options);
 
@@ -167,6 +169,7 @@ IncFsErrorCode IncFs_Root(const IncFsControl* control, char buffer[], size_t* bu
 IncFsErrorCode IncFs_MakeFile(const IncFsControl* control, const char* path, int32_t mode,
                               IncFsFileId id, IncFsNewFileParams params);
 IncFsErrorCode IncFs_MakeDir(const IncFsControl* control, const char* path, int32_t mode);
+IncFsErrorCode IncFs_MakeDirs(const IncFsControl* control, const char* path, int32_t mode);
 
 IncFsErrorCode IncFs_GetMetadataById(const IncFsControl* control, IncFsFileId id, char buffer[],
                                      size_t* bufferSize);
