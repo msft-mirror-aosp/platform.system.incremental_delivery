@@ -497,6 +497,7 @@ TEST_F(IncFsTest, GetFilledRanges) {
     EXPECT_EQ(0, filledRanges.hashRangesCount);
 
     EXPECT_EQ(-ENODATA, IncFs_IsFullyLoaded(fd.get()));
+    EXPECT_EQ(-ENODATA, IncFs_IsEverythingFullyLoaded(control_));
 
     // write one block
     std::vector<char> data(INCFS_DATA_FILE_BLOCK_SIZE);
@@ -530,6 +531,7 @@ TEST_F(IncFsTest, GetFilledRanges) {
     EXPECT_EQ(0, filledRanges.hashRangesCount);
 
     EXPECT_EQ(-ENODATA, IncFs_IsFullyLoaded(fd.get()));
+    EXPECT_EQ(-ENODATA, IncFs_IsEverythingFullyLoaded(control_));
 
     // append one more block next to the first one
     block.pageIndex = 1;
@@ -558,6 +560,7 @@ TEST_F(IncFsTest, GetFilledRanges) {
     EXPECT_EQ(0, filledRanges.hashRangesCount);
 
     EXPECT_EQ(-ENODATA, IncFs_IsFullyLoaded(fd.get()));
+    EXPECT_EQ(-ENODATA, IncFs_IsEverythingFullyLoaded(control_));
 
     // now create a gap between filled blocks
     block.pageIndex = 3;
@@ -598,6 +601,7 @@ TEST_F(IncFsTest, GetFilledRanges) {
     EXPECT_EQ(0, filledRanges.hashRangesCount);
 
     EXPECT_EQ(-ENODATA, IncFs_IsFullyLoaded(fd.get()));
+    EXPECT_EQ(-ENODATA, IncFs_IsEverythingFullyLoaded(control_));
 
     // at last fill the whole file and make sure we report it as having a single range
     block.pageIndex = 2;
@@ -625,6 +629,7 @@ TEST_F(IncFsTest, GetFilledRanges) {
     EXPECT_EQ(0, filledRanges.hashRangesCount);
 
     EXPECT_EQ(0, IncFs_IsFullyLoaded(fd.get()));
+    EXPECT_EQ(0, IncFs_IsEverythingFullyLoaded(control_));
 }
 
 TEST_F(IncFsTest, GetFilledRangesSmallBuffer) {
@@ -756,6 +761,7 @@ TEST_F(IncFsTest, GetFilledRangesCpp) {
     EXPECT_EQ(size_t(1), ranges3.hashRanges()[1].size());
 
     EXPECT_EQ(LoadingState::MissingBlocks, isFullyLoaded(fd.get()));
+    EXPECT_EQ(LoadingState::MissingBlocks, isEverythingFullyLoaded(control_));
 
     {
         std::vector<char> data(INCFS_DATA_FILE_BLOCK_SIZE);
@@ -775,6 +781,7 @@ TEST_F(IncFsTest, GetFilledRangesCpp) {
         }
     }
     EXPECT_EQ(LoadingState::Full, isFullyLoaded(fd.get()));
+    EXPECT_EQ(LoadingState::Full, isEverythingFullyLoaded(control_));
 }
 
 TEST_F(IncFsTest, BlocksWritten) {
@@ -1083,4 +1090,17 @@ TEST_F(IncFsTest, GetBlockCountsHash) {
     EXPECT_EQ(4, counts.filledDataBlocks);
     EXPECT_EQ(3, counts.totalHashBlocks);
     EXPECT_EQ(2, counts.filledHashBlocks);
+}
+
+TEST_F(IncFsTest, ReserveSpace) {
+    auto size = makeFileWithHash(1);
+    ASSERT_GT(size, 0);
+
+    EXPECT_EQ(0, IncFs_ReserveSpace(control_, mountPath(test_file_name_).c_str(), size));
+    EXPECT_EQ(0, IncFs_ReserveSpace(control_, mountPath(test_file_name_).c_str(), 2 * size));
+    EXPECT_EQ(0, IncFs_ReserveSpace(control_, mountPath(test_file_name_).c_str(), 2 * size));
+    EXPECT_EQ(0,
+              IncFs_ReserveSpace(control_, mountPath(test_file_name_).c_str(), kTrimReservedSpace));
+    EXPECT_EQ(0,
+              IncFs_ReserveSpace(control_, mountPath(test_file_name_).c_str(), kTrimReservedSpace));
 }
