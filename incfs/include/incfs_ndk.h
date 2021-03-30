@@ -258,6 +258,17 @@ IncFsErrorCode IncFs_GetFileBlockCountById(const IncFsControl* control, IncFsFil
 IncFsErrorCode IncFs_ListIncompleteFiles(const IncFsControl* control, IncFsFileId ids[],
                                          size_t* bufferSize);
 
+// Calls a passed callback for each file on the mounted filesystem, or, in the second case,
+// for each incomplete file (only for v2 IncFS).
+// Callback can stop the iteration early by returning |false|.
+// Return codes:
+// >=0      - number of files iterated,
+// <0       - -errno
+typedef bool (*FileCallback)(void* context, const IncFsControl* control, IncFsFileId fileId);
+IncFsErrorCode IncFs_ForEachFile(const IncFsControl* control, void* context, FileCallback cb);
+IncFsErrorCode IncFs_ForEachIncompleteFile(const IncFsControl* control, void* context,
+                                           FileCallback cb);
+
 IncFsErrorCode IncFs_WaitForLoadingComplete(const IncFsControl* control, int32_t timeoutMs);
 
 // Gets a collection of filled ranges in the file from IncFS. Uses the |outBuffer| memory, it has
@@ -286,7 +297,9 @@ IncFsErrorCode IncFs_IsEverythingFullyLoaded(const IncFsControl* control);
 
 // Reserve |size| bytes for the file. Trims reserved space to the current file size when |size = -1|
 static const IncFsSize kIncFsTrimReservedSpace = -1;
-IncFsErrorCode IncFs_ReserveSpace(const IncFsControl* control, const char* path, IncFsSize size);
+IncFsErrorCode IncFs_ReserveSpaceByPath(const IncFsControl* control, const char* path,
+                                        IncFsSize size);
+IncFsErrorCode IncFs_ReserveSpaceById(const IncFsControl* control, IncFsFileId id, IncFsSize size);
 
 __END_DECLS
 
