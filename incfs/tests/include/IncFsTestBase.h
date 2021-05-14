@@ -42,9 +42,11 @@ protected:
         if (!enabled()) {
             GTEST_SKIP() << "test not supported: IncFS is not enabled";
         } else {
+            metrics_key_ = path::baseName(image_dir_path_);
             control_ = mount(image_dir_path_, mount_dir_path_,
                              MountOptions{.readLogBufferPages = 4,
-                                          .defaultReadTimeoutMs = getReadTimeout()});
+                                          .defaultReadTimeoutMs = getReadTimeout(),
+                                          .sysfsName = metrics_key_.c_str()});
             ASSERT_TRUE(control_.cmd() >= 0) << "Expected >= 0 got " << control_.cmd();
             ASSERT_TRUE(control_.pendingReads() >= 0);
             ASSERT_TRUE(control_.logs() >= 0);
@@ -116,6 +118,7 @@ protected:
     std::optional<TemporaryDir> tmp_dir_for_image_;
     inline static const std::string_view test_file_name_ = "test.txt";
     inline static const std::string_view test_dir_name_ = "test_dir";
+    std::string metrics_key_;
     Control control_;
 };
 
