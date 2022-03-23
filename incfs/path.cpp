@@ -114,25 +114,12 @@ std::string normalize(std::string_view path) {
     return result;
 }
 
-static constexpr char fdNameFormat[] = "/proc/self/fd/%d";
-
-std::string procfsForFd(int fd) {
-    char fdNameBuffer[std::size(fdNameFormat) + 11 + 1]; // max int length + '\0'
-    snprintf(fdNameBuffer, std::size(fdNameBuffer), fdNameFormat, fd);
-    return fdNameBuffer;
-}
-
 std::string fromFd(int fd) {
+    static constexpr auto kDeletedSuffix = " (deleted)"sv;
+    static constexpr char fdNameFormat[] = "/proc/self/fd/%d";
     char fdNameBuffer[std::size(fdNameFormat) + 11 + 1]; // max int length + '\0'
     snprintf(fdNameBuffer, std::size(fdNameBuffer), fdNameFormat, fd);
 
-    return readlink(fdNameBuffer);
-}
-
-std::string readlink(std::string_view path) {
-    static constexpr auto kDeletedSuffix = " (deleted)"sv;
-
-    auto cPath = c_str(path);
     std::string res;
     // We used to call lstat() here to preallocate the buffer to the exact required size; turns out
     // that call is significantly more expensive than anything else, so doing a couple extra
@@ -140,9 +127,9 @@ std::string readlink(std::string_view path) {
     auto bufSize = 256;
     for (;;) {
         res.resize(bufSize - 1, '\0');
-        auto size = ::readlink(cPath, &res[0], res.size());
+        auto size = ::readlink(fdNameBuffer, &res[0], res.size());
         if (size < 0) {
-            PLOG(ERROR) << "readlink failed for " << path;
+            PLOG(ERROR) << "readlink failed for " << fdNameBuffer;
             return {};
         }
         if (size >= ssize_t(res.size())) {
