@@ -35,6 +35,7 @@ license {
     visibility: [":__subpackages__"],
     license_kinds: [
         "SPDX-license-identifier-Apache-2.0",
+        "SPDX-license-identifier-GPL-2.0",
     ],
     license_text: [
         "NOTICE",
@@ -160,10 +161,6 @@ cc_test {
         "tests/MountRegistry_test.cpp",
     ],
     require_root: true,
-    test_suites: [
-        "general-tests",
-        "device-tests",
-    ],
 }
 
 cc_benchmark {
@@ -192,9 +189,4 @@ cc_binary {
         "incfsdump/main.cpp",
         "incfsdump/dump.cpp",
     ],
-    target: {
-        linux_glibc: {
-            enabled: true,
-        },
-    },
 }
