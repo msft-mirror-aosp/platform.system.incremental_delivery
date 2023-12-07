@@ -37,14 +37,16 @@
 #include <sys/xattr.h>
 #include <unistd.h>
 
-#include "linux/incrementalfs.h"
-
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <optional>
+#include <sstream>
 #include <string_view>
+
+#include "linux/incrementalfs.h"
 
 using namespace std::literals;
 
@@ -442,13 +444,12 @@ private:
     }
 
     static std::string toString(incfs_uuid_t uuid) {
-        std::string res;
+        std::stringstream res;
+        res << std::hex;
         for (unsigned char b : uuid.bytes) {
-            char buf[3] = {};
-            snprintf(buf, std::size(buf) - 1, "%02x", (unsigned int)b);
-            res += buf;
+            res << std::setfill('0') << std::setw(2) << (unsigned int)b;
         }
-        return res;
+        return res.str();
     }
 
     OstreamWrapper out() const {
