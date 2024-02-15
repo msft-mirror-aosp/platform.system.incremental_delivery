@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_android_resources",
     default_applicable_licenses: ["system_incremental_delivery_incfs_license"],
 }
 
@@ -44,7 +45,13 @@ license {
 cc_defaults {
     name: "libincfs_defaults_common",
     cpp_std: "c++2a",
-    cflags: ["-Werror", "-Wall", "-Wextra", "-Wno-deprecated-enum-enum-conversion", "-D_FILE_OFFSET_BITS=64"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Wno-deprecated-enum-enum-conversion",
+        "-D_FILE_OFFSET_BITS=64",
+    ],
     tidy: true,
     tidy_checks: [
         "android-*",
@@ -133,13 +140,16 @@ cc_library_static {
 
 cc_library_headers {
     name: "libincfs_headers",
-    export_include_dirs: ["include/", "kernel-headers",],
+    export_include_dirs: [
+        "include/",
+        "kernel-headers",
+    ],
     host_supported: true,
     target: {
         linux_bionic: {
             enabled: true,
-        }
-    }
+        },
+    },
 }
 
 cc_test {
