@@ -1409,9 +1409,11 @@ IncFsErrorCode IncFs_Unmount(const char* dir) {
     errno = 0;
     if (::umount2(dir, MNT_FORCE) == 0 || errno == EINVAL || errno == ENOENT) {
         // EINVAL - not a mount point, ENOENT - doesn't exist at all
+        if (errno == 0) {
+            LOG(INFO) << __func__ << ": succeeded on the first try for '" << dir << '\'';
+        }
         return -errno;
     }
-    PLOG(WARNING) << __func__ << ": umount(force) failed, detaching '" << dir << '\'';
     errno = 0;
     if (!::umount2(dir, MNT_DETACH)) {
         return 0;
