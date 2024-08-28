@@ -21,9 +21,9 @@
 #include <android-base/off64_t.h>
 
 #include <atomic>
-#include <concepts>
 #include <iterator>
 #include <memory>
+#include <shared_mutex>
 #include <type_traits>
 #include <vector>
 
@@ -152,12 +152,12 @@ private:
 public:
     class const_iterator final {
     public:
-        friend map_ptr;
+        friend struct map_ptr<T, Verified>;
         using iterator_category = std::random_access_iterator_tag;
         using value_type = const map_ptr<T>;
         using difference_type = std::ptrdiff_t;
         using pointer = void;
-        using reference = const value_type&;
+        using reference = value_type;
 
         const_iterator() = default;
         const_iterator(const const_iterator& it) = default;
@@ -176,19 +176,19 @@ public:
 
         reference operator*() const { return safe_ptr_; }
 
-        const_iterator& operator++() {
-            ++safe_ptr_;
+        const const_iterator& operator++() {
+            safe_ptr_++;
             return *this;
         }
 
         const_iterator& operator+=(int n) {
-            safe_ptr_ += n;
+            safe_ptr_ = safe_ptr_ + n;
             return *this;
         }
 
-        const_iterator operator++(int) {
+        const const_iterator operator++(int) {
             const_iterator temp(*this);
-            ++safe_ptr_;
+            safe_ptr_++;
             return temp;
         }
 
@@ -308,34 +308,27 @@ public:
     }
 
     template <typename T1 = T, NotVoid<T1> = 0>
-    map_ptr<T1>& operator++() {
+    const map_ptr<T1>& operator++() {
         LIBINCFS_MAP_PTR_DEBUG_CODE(verified_ = false);
         ++ptr_;
         return *this;
     }
 
     template <typename T1 = T, NotVoid<T1> = 0>
-    map_ptr<T1> operator++(int) {
+    const map_ptr<T1> operator++(int) {
         map_ptr<T1> temp = *this;
         LIBINCFS_MAP_PTR_DEBUG_CODE(verified_ = false);
         ++ptr_;
         return temp;
     }
 
-    template <std::integral S, typename T1 = T, NotVoid<T1> = 0>
-    map_ptr<T1>& operator+=(S n) {
-        ptr_ += n;
-        LIBINCFS_MAP_PTR_DEBUG_CODE(verified_ = false);
-        return *this;
+    template <typename S, typename T1 = T, NotVoid<T1> = 0>
+    map_ptr<T1> operator+(const S n) const {
+        return map_ptr<T1>(map_, ptr_ + n, verified_block_);
     }
 
-    template <std::integral S, typename T1 = T, NotVoid<T1> = 0>
-    map_ptr<T1> operator+(S n) const {
-        return map_ptr<T1>(*this) += n;
-    }
-
-    template <std::integral S, typename T1 = T, NotVoid<T1> = 0>
-    map_ptr<T1> operator-(S n) const {
+    template <typename S, typename T1 = T, NotVoid<T1> = 0>
+    map_ptr<T1> operator-(const S n) const {
         return map_ptr<T1>(map_, ptr_ - n, verified_block_);
     }
 
@@ -361,16 +354,14 @@ public:
     //
     // Returns true if the elements are completely present; otherwise, returns false.
     template <typename T1 = T, NotVoid<T1> = 0, bool V1 = Verified, IsUnverified<V1> = 0>
-    bool verify([[maybe_unused]] size_t n = 1) const {
+    bool verify(size_t n = 1) const {
         if (ptr_ == nullptr) {
             return false;
         }
 
-#ifndef __ANDROID__
-        return true;
-#else
+#ifdef __ANDROID__
         if (LIKELY(map_ == nullptr)) {
-            return true;
+            return ptr_ != nullptr;
         }
 
         const size_t verify_size = sizeof(T) * n;
@@ -392,6 +383,9 @@ public:
 
         LIBINCFS_MAP_PTR_DEBUG_CODE(verified_ = false);
         return false;
+#else
+        (void)n;
+        return true;
 #endif
     }
 
