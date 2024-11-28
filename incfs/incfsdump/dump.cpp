@@ -235,7 +235,10 @@ typedef union {
 class Dump {
 public:
     Dump(std::string_view backingFile)
-          : mBackingFile(android::base::Basename(std::string(backingFile))), mIn(backingFile) {}
+          : mBackingFile(android::base::Basename(backingFile)) {
+            std::string backingFileStr(backingFile);
+              mIn.open(backingFileStr);
+    }
 
     void run() {
         if (!mIn) {
