@@ -203,7 +203,7 @@ cc_binary {
         "incfsdump/dump.cpp",
     ],
     target: {
-        linux_glibc: {
+        host_linux: {
             enabled: true,
         },
     },
