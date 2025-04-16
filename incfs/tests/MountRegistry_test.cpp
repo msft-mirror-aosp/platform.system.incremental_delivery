@@ -102,7 +102,7 @@ static MountRegistry::Mounts makeFrom(std::string_view str) {
 
     MountRegistry::Mounts m;
     EXPECT_TRUE(m.loadFrom(f.fd, INCFS_NAME));
-    return std::move(m);
+    return m;
 }
 
 TEST_F(MountRegistryTest, MultiRootLoad) {
@@ -168,4 +168,50 @@ TEST_F(MountRegistryTest, LoadInvalid) {
     auto m = makeFrom(mountsFile);
     // only two of the mounts in this file are valid
     EXPECT_EQ(size_t(2), m.size());
+}
+
+TEST_F(MountRegistryTest, CopyThreadSafety) {
+    r().addRoot("/root/123456789", "/backing/123456789");
+    r().addBind("/root/123456789", "/bind/123456789");
+    auto mounts = MountRegistry::Mounts(r());
+    ASSERT_NE(&mounts, &r());
+
+    ASSERT_EQ(size_t(1), mounts.size());
+    ASSERT_STREQ("/root/123456789", mounts.begin()->root().data());
+    ASSERT_EQ(size_t(2), mounts.begin()->binds().size());
+    ASSERT_STREQ("", mounts.begin()->binds().front().first.data());
+    ASSERT_STREQ("/root/123456789", mounts.begin()->binds().front().second.data());
+    ASSERT_STREQ("", mounts.begin()->binds()[1].first.data());
+    ASSERT_STREQ("/bind/123456789", mounts.begin()->binds()[1].second.data());
+
+    // Now make sure the copy stays valid after clearing the original.
+    r().clear();
+
+    // Populate the original with some other info, ensuring the old pointers are wrong
+    r().addRoot("/not_root1", "/not_backing1");
+    r().addBind("/not_root1", "/not_bind1");
+
+    ASSERT_EQ(size_t(1), mounts.size());
+    ASSERT_STREQ("/root/123456789", mounts.begin()->root().data());
+    ASSERT_EQ(size_t(2), mounts.begin()->binds().size());
+    ASSERT_STREQ("", mounts.begin()->binds().front().first.data());
+    ASSERT_STREQ("/root/123456789", mounts.begin()->binds().front().second.data());
+    ASSERT_STREQ("", mounts.begin()->binds()[1].first.data());
+    ASSERT_STREQ("/bind/123456789", mounts.begin()->binds()[1].second.data());
+
+    // Now the same but with assignment.
+    MountRegistry::Mounts mounts2;
+    mounts2 = mounts;
+
+    mounts.clear();
+    mounts.addRoot("/really_not_root1", "/really_not_backing1");
+    mounts.addBind("/really_not_root1", "/really_not_bind1");
+
+    ASSERT_EQ(size_t(1), mounts2.size());
+    ASSERT_STREQ("/root/123456789", mounts2.begin()->root().data());
+    ASSERT_EQ(size_t(2), mounts2.begin()->binds().size());
+    ASSERT_STREQ("", mounts2.begin()->binds().front().first.data());
+    ASSERT_STREQ("/root/123456789", mounts2.begin()->binds().front().second.data());
+    ASSERT_STREQ("", mounts2.begin()->binds()[1].first.data());
+    ASSERT_STREQ("/bind/123456789", mounts2.begin()->binds()[1].second.data());
 }
