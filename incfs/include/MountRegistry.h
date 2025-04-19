@@ -68,15 +68,34 @@ public:
         };
 
         struct iterator final : public std::vector<Root>::const_iterator {
+            struct MountPtr {
+                Mount m;
+
+                Mount* operator->() { return &m; }
+                Mount& operator*() { return m; }
+            };
+
             using base = std::vector<Root>::const_iterator;
             using value_type = Mount;
+            using reference = Mount;
+            using pointer = MountPtr;
+
             value_type operator*() const { return Mount(*this); }
+            pointer operator->() const { return MountPtr{Mount(*this)}; }
 
             explicit iterator(base b) : base(b) {}
         };
 
         static Mounts load(base::borrowed_fd fd, std::string_view filesystem);
         bool loadFrom(base::borrowed_fd fd, std::string_view filesystem);
+
+        Mounts() = default;
+        Mounts(Mounts&&) = default;
+        Mounts& operator=(Mounts&&) = default;
+
+        // These require some fixups as we have self references in the member containers.
+        Mounts(const Mounts& other);
+        Mounts& operator=(const Mounts& other);
 
         iterator begin() const { return iterator(roots.begin()); }
         iterator end() const { return iterator(roots.end()); }
@@ -96,6 +115,7 @@ public:
 
     private:
         std::pair<int, BindMap::const_iterator> rootIndex(std::string_view path) const;
+        void copyFrom(const Mounts& other);
 
         std::vector<Root> roots;
         BindMap rootByBindPoint;

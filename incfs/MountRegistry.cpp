@@ -438,4 +438,27 @@ auto MountRegistry::Mounts::load(base::borrowed_fd mountInfo, std::string_view f
     return res;
 }
 
+MountRegistry::Mounts::Mounts(const Mounts& other) {
+    copyFrom(other);
+}
+
+MountRegistry::Mounts& MountRegistry::Mounts::operator=(const Mounts& other) {
+    if (this != &other) {
+        copyFrom(other);
+    }
+    return *this;
+}
+
+void MountRegistry::Mounts::copyFrom(const Mounts& other) {
+    roots = other.roots;
+    rootByBindPoint = other.rootByBindPoint;
+    // Now find the iterators of the new roots in our map and update them so
+    // they don't point to the `other`'s map.
+    for (auto& root : roots) {
+        for (auto& it : root.binds) {
+            it = rootByBindPoint.find(it->first);
+        }
+    }
+}
+
 } // namespace android::incfs
