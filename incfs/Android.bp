@@ -44,7 +44,6 @@ license {
 
 cc_defaults {
     name: "libincfs_defaults_common",
-    cpp_std: "c++2a",
     cflags: [
         "-Werror",
         "-Wall",
