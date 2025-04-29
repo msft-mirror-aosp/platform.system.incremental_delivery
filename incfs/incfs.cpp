@@ -44,6 +44,7 @@
 #include <sys/xattr.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <charconv>
 #include <chrono>
 #include <iterator>
