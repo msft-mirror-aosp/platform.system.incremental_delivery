@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <utils/Looper.h>
 
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 
