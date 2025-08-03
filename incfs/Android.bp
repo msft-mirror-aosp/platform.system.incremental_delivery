@@ -188,6 +188,9 @@ cc_benchmark {
         "libincfs",
         "libincfs-utils",
     ],
+    cflags: [
+        "-Wno-unused-but-set-variable",
+    ],
 }
 
 cc_binary {
