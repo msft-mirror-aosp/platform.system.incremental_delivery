@@ -30,11 +30,11 @@ static std::unique_ptr<TemporaryFile> makeFile() {
     return tmp;
 }
 
-static std::pair<std::unique_ptr<TemporaryFile>, std::unique_ptr<android::base::MappedFile>>
+static std::pair<std::unique_ptr<TemporaryFile>, std::optional<android::base::MappedFile>>
 makeEmptyFileMapping() {
     auto tmp = makeFile();
     // mmap() only works for non-empty files, but it's "ok" to resize it back to empty afterwards
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     ftruncate(tmp->fd, 0);
     return {std::move(tmp), std::move(mapping)};
 }
@@ -49,7 +49,7 @@ BENCHMARK(TestEmpty);
 
 static void TestSignal(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
 
     int val = 0;
     for (auto _ : state) {
@@ -97,7 +97,7 @@ BENCHMARK(TestMapPtr);
 
 static void TestAccess(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     int val = 0;
     for (auto _ : state) {
         incfs::access(mapping->data(), [&](auto ptr) { val += *ptr; });
@@ -107,7 +107,7 @@ BENCHMARK(TestAccess);
 
 static void TestAccessFast(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     int val = 0;
     incfs::access(mapping->data(), [&](auto ptr) {
         for (auto _ : state) {
@@ -119,7 +119,7 @@ BENCHMARK(TestAccessFast);
 
 static void TestAccessVal(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     int val = 0;
     for (auto _ : state) {
         incfs::access(mapping->data(), [&](auto ptr) { return val += *ptr; });
@@ -129,7 +129,7 @@ BENCHMARK(TestAccessVal);
 
 static void TestAccessNested(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     int val = 0;
     incfs::access(nullptr, [&](auto) {
         for (auto _ : state) {
@@ -141,7 +141,7 @@ BENCHMARK(TestAccessNested);
 
 static void TestAccessDoubleNested(benchmark::State& state) {
     auto tmp = makeFile();
-    auto mapping = android::base::MappedFile::FromFd(tmp->fd, 0, 1, PROT_READ);
+    auto mapping = android::base::MappedFile::Create(tmp->fd, 0, 1, PROT_READ);
     int val = 0;
     incfs::access(nullptr, [&](auto) {
         incfs::access(nullptr, [&](auto) {
