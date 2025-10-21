@@ -105,6 +105,11 @@ cc_library {
         "MountRegistry.cpp",
         "path.cpp",
     ],
+    min_sdk_version: "apex_inherit",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.webapp",
+    ],
 }
 
 cc_library_static {
@@ -135,6 +140,11 @@ cc_library_static {
             enabled: true,
         },
     },
+    min_sdk_version: "apex_inherit",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.webapp",
+    ],
 }
 
 cc_library_headers {
@@ -149,6 +159,11 @@ cc_library_headers {
             enabled: true,
         },
     },
+    min_sdk_version: "apex_inherit",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.webapp",
+    ],
 }
 
 cc_test {

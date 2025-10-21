@@ -8,4 +8,11 @@ sysprop_library {
     property_owner: "Platform",
     api_packages: ["android.sysprop"],
     vendor_available: true,
+    cpp: {
+        min_sdk_version: "apex_inherit",
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.webapp",
+    ],
 }
