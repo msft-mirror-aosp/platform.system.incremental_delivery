@@ -127,13 +127,11 @@ cc_library_static {
             shared_libs: [
                 "libbase",
                 "libincfs",
-                "libutils",
             ],
         },
         host: {
             static_libs: [
                 "libbase",
-                "libutils",
             ],
         },
         windows: {
@@ -176,7 +174,6 @@ cc_test {
     ],
     shared_libs: [
         "libbase",
-        "libutils",
     ],
     srcs: [
         "tests/util/map_ptr_test.cpp",
