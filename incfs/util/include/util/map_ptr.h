@@ -18,7 +18,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/macros.h>
-#include <android-base/mapped_file.h>
 #include <android-base/off64_t.h>
 
 #include <atomic>
@@ -32,7 +31,11 @@
 #include <linux/incrementalfs.h>
 #endif
 
-namespace android::incfs {
+namespace android {
+
+class FileMap;
+
+namespace incfs {
 
 // Controls whether not verifying the presence of data before de-referencing the pointer aborts
 // program execution.
@@ -80,11 +83,6 @@ public:
                           reinterpret_cast<const T*>(unsafe_data()));
     }
 
-    // Moves the internal file mapping out, after verifying that it has all pages present.
-    // This call transfers the mapping ownership to the caller, making the IncFsFileMap object
-    // unusable.
-    std::optional<base::MappedFile> take_data() &&;
-
     const void* unsafe_data() const;
     size_t length() const;
     off64_t offset() const;
@@ -107,9 +105,7 @@ private:
     size_t start_block_offset_ = 0;
     const uint8_t* start_block_ptr_ = nullptr;
 
-    std::optional<android::base::MappedFile> map_;
-    std::string filename_;
-    off64_t offset_ = -1;
+    std::unique_ptr<android::FileMap> map_;
 
     // Bitwise cache for storing whether a block has already been verified. This cache relies on
     // IncFs not deleting blocks of a file that is currently memory mapped.
@@ -368,8 +364,8 @@ public:
             return ptr_ != nullptr;
         }
 
-        const size_t verify_size = sizeof(T1) * n;
-        LIBINCFS_MAP_PTR_DEBUG_CODE(if (sizeof(T1) <= verify_size) verified_ = true;);
+        const size_t verify_size = sizeof(T) * n;
+        LIBINCFS_MAP_PTR_DEBUG_CODE(if (sizeof(T) <= verify_size) verified_ = true;);
 
         const auto data_start = reinterpret_cast<const uint8_t*>(ptr_);
         const auto data_end = reinterpret_cast<const uint8_t*>(ptr_) + verify_size;
@@ -412,4 +408,6 @@ private:
     LIBINCFS_MAP_PTR_DEBUG_CODE(mutable bool verified_ = Verified);
 };
 
-} // namespace android::incfs
+} // namespace incfs
+
+} // namespace android
