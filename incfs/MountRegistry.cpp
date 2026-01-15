@@ -258,10 +258,16 @@ std::unique_lock<std::mutex> MountRegistry::ensureUpToDate() {
     return lock;
 }
 
-template <class Callback>
+template <size_t maxLineLength, class Callback>
 static bool forEachLine(base::borrowed_fd fd, Callback&& cb) {
-    static constexpr auto kBufSize = 128 * 1024;
-    char buffer[kBufSize];
+    // Make sure we don't use too large buffer and not overrun the stack space if it's already close
+    // to full.
+    constexpr auto kBufSize = 32 * 1024;
+
+    static_assert(maxLineLength < kBufSize,
+                  "Stack-allocated buffer is too small for the requested line size, "
+                  "time to rewrite with a vector");
+    char buffer[kBufSize] __attribute__((uninitialized));
     const char* nextLine = buffer;
     char* nextRead = buffer;
     int64_t pos = 0;
@@ -329,7 +335,9 @@ bool MountRegistry::Mounts::loadFrom(base::borrowed_fd fd, std::string_view file
     };
     std::unordered_map<std::string, MountInfo> mountsByGroup(16);
     std::vector<std::string_view> items(12);
-    const auto parsed = forEachLine(fd, [&](std::string_view line) {
+    // Each line contains 3 paths + some shorter fields.
+    constexpr auto maxLineSize = 3 * PATH_MAX + 1024;
+    const auto parsed = forEachLine<maxLineSize>(fd, [&](std::string_view line) {
         if (line.empty()) {
             return;
         }
